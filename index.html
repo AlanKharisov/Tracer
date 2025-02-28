@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Трекер расходов</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: #4a90e2;
+            padding: 10px 20px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar button {
+            background-color: #357abd;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .navbar button:hover {
+            background-color: #2a5f8a;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 80px auto 20px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            transition: all 0.5s ease;
+        }
+
+        .chart {
+            margin-top: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .transaction-form {
+            display: none;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .transaction-form.visible {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .transaction {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .transaction p {
+            margin: 5px 0;
+        }
+
+        .category-details {
+            margin-top: 20px;
+        }
+
+        .back-button {
+            background-color: #ff4757;
+            margin-top: 10px;
+            color: #fff;
+        }
+
+        .back-button:hover {
+            background-color: #ff6b81;
+        }
+
+        .add-button {
+            background-color: #4caf50;
+            color: #fff;
+        }
+
+        .add-button:hover {
+            background-color: #45a049;
+        }
+
+        .total-spent {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .category-item {
+            padding: 5px;
+            background: #e3f2fd;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            position: relative;
+            width: 100%;
+            transition: all 0.5s ease;
+        }
+
+        .chart-container.shrinked {
+            transform: translateX(-50%) scale(0.7);
+        }
+
+        .chart-container.expand {
+            transform: translateX(0) scale(1);
+        }
+
+        .history {
+            margin-left: 20px;
+            flex: 1;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .history.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .color-picker label {
+            margin-right: 10px;
+        }
+
+        .color-picker input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .category-details {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Стили для модального окна */
+        #diagramModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #diagramModal > div {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #diagramModal button {
+            margin: 5px 0;
+            width: 100%;
+            padding: 10px;
+            background-color: #4a90e2;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #diagramModal button:hover {
+            background-color: #357abd;
+        }
+
+        #diagramModal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 600px) {
+            .container {
+                margin: 60px auto;
+                padding: 15px;
+                flex-direction: column;
+            }
+
+            .chart-container canvas {
+                max-width: 100% !important;
+                width: 90% !important;
+            }
+
+            .total-spent {
+                font-size: 16px;
+            }
+
+            .navbar button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+
+            .navbar span {
+                font-size: 18px;
+            }
+
+            .history {
+                margin-left: 0;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <button onclick="showDiagramList()">Поменять</button>
+        <button onclick="toggleTransactionForm()">Добавить расходы</button>
+    </div>
+
+    <div class="container">
+        <div class="chart">
+            <h2>Диаграмма расходов</h2>
+            <div class="chart-container" id="chartContainer" onclick="toggleChartSize()">
+                <canvas id="myChart"></canvas>
+            </div>
+            <div class="category-details" id="categoryDetails"></div>
+        </div>
+
+        <div class="history">
+            <h2 id="selectedCategory"></h2>
+            <div id="transactionHistory"></div>
+        </div>
+
+        <div class="total-spent" id="totalSpent"></div>
+
+        <div class="transaction-form" id="transactionForm">
+            <div class="input-group">
+                <label for="amount">Сумма:</label>
+                <input type="number" id="amount" placeholder="Введите сумму">
+            </div>
+
+            <div class="input-group">
+                <label for="currency">Валюта:</label>
+                <select id="currency">
+                    <option value="CAD">Канадский доллар (CAD)</option>
+                    <option value="UAH">Гривна (UAH)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="category">Категория:</label>
+                <input type="text" id="category" placeholder="Введите категорию" oninput="checkCategory()">
+            </div>
+
+            <div class="color-picker">
+                <label for="color">Цвет категории:</label>
+                <input type="color" id="color" value="#e3f2fd">
+            </div>
+
+            <button class="add-button" onclick="addTransaction()">Добавить транзакцию</button>
+            <button class="back-button" onclick="toggleTransactionForm()">Назад</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для выбора диаграммы -->
+    <div id="diagramModal">
+        <div>
+            <h2>Выберите диаграмму</h2>
+            <div id="diagramList"></div>
+            <input type="text" id="newDiagramName" placeholder="Название новой диаграммы">
+            <button onclick="addDiagram()">Добавить</button>
+            <button onclick="closeDiagramModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let diagrams = JSON.parse(localStorage.getItem('diagrams')) || [{ name: 'Основная', transactions: [] }];
+        let currentDiagramIndex = 0;
+        let exchangeRate = null;
+        let totalSpentCAD = 0;
+        let myChart = null;
+
+        // Функция для получения курса валют
+        async function getExchangeRate() {
+            const response = await fetch('https://api.exchangerate-api.com/v4/latest/CAD');
+            const data = await response.json();
+            exchangeRate = data.rates.UAH; // Курс CAD к UAH
+        }
+
+        // Функция для отображения/скрытия формы добавления транзакции
+        function toggleTransactionForm() {
+            const form = document.getElementById('transactionForm');
+            const container = document.querySelector('.container');
+            form.classList.toggle('visible');
+            container.classList.toggle('form-visible');
+        }
+
+        // Функция для проверки существующей категории
+        function checkCategory() {
+            const categoryInput = document.getElementById('category');
+            const colorInput = document.getElementById('color');
+            const category = categoryInput.value.trim();
+
+            // Проверяем, существует ли категория
+            const existingCategory = diagrams[currentDiagramIndex].transactions.find(t => t.category === category);
+            if (existingCategory) {
+                colorInput.value = existingCategory.color;
+                colorInput.disabled = true; // Блокируем выбор цвета
+            } else {
+                colorInput.disabled = false; // Разблокируем выбор цвета
+            }
+        }
+
+        // Функция для добавления транзакции
+        async function addTransaction() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const currency = document.getElementById('currency').value;
+            const category = document.getElementById('category').value;
+            const color = document.getElementById('color').value;
+
+            if (!amount || !category) {
+                alert('Заполните все поля!');
+                return;
+            }
+
+            if (!exchangeRate) {
+                await getExchangeRate();
+            }
+
+            const transaction = {
+                amount: amount,
+                currency: currency,
+                category: category,
+                date: new Date().toLocaleString(),
+                exchangeRate: exchangeRate,
+                color: color
+            };
+
+            diagrams[currentDiagramIndex].transactions.push(transaction);
+            localStorage.setItem('diagrams', JSON.stringify(diagrams));
+            updateTotalSpent();
+            displayChart();
+            displayTransactionHistory();
+            toggleTransactionForm();
+        }
+
+        // Функция для обновления общей суммы расходов
+        function updateTotalSpent() {
+            totalSpentCAD = 0;
+            diagrams[currentDiagramIndex].transactions.forEach(transaction => {
+                const amountInCAD = transaction.currency === 'CAD' ? transaction.amount :
+                    transaction.amount / transaction.exchangeRate;
+                totalSpentCAD += amountInCAD;
+            });
+        }
+
+        // Функция для отображения круговой диаграммы
+        function displayChart() {
+            const ctx = document.getElementById('myChart').getContext('2d');
+
+            // Удаляем предыдущий график, если он существует
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            // Группируем транзакции по категориям
+            const categories = {};
+            diagrams[currentDiagramIndex].transactions.forEach(transaction => {
+                if (!categories[transaction.category]) {
+                    categories[transaction.category] = {
+                        amount: 0,
+                        color: transaction.color
+                    };
+                }
+                categories[transaction.category].amount += transaction.currency === 'CAD' ? transaction.amount :
+                    transaction.amount / transaction.exchangeRate;
+            });
+
+            const labels = Object.keys(categories);
+            const data = labels.map(label => categories[label].amount);
+            const colors = labels.map(label => categories[label].color);
+
+            myChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Расходы по категориям',
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const category = labels[elements[0].index];
+                            showCategoryDetails(category);
+                        }
+                    }
+                }
+            });
+
+            // Отображаем общую сумму расходов
+            document.getElementById('totalSpent').innerText = `Общие расходы: ${totalSpentCAD.toFixed(2)} CAD`;
+        }
+
+        // Функция для отображения деталей категории
+        function showCategoryDetails(category) {
+            const transactions = diagrams[currentDiagramIndex].transactions.filter(t => t.category === category);
+            let totalCAD = 0;
+            let totalUAH = 0;
+
+            transactions.forEach(transaction => {
+                if (transaction.currency === 'CAD') {
+                    totalCAD += transaction.amount;
+                    totalUAH += transaction.amount * exchangeRate;
+                } else {
+                    totalUAH += transaction.amount;
+                    totalCAD += transaction.amount / exchangeRate;
+                }
+            });
+
+            document.getElementById('selectedCategory').innerText = `Категория: ${category}`;
+            document.getElementById('categoryDetails').innerHTML = `
+                <p>Всего потрачено в CAD: ${totalCAD.toFixed(2)}</p>
+                <p>Всего потрачено в UAH: ${totalUAH.toFixed(2)}</p>
+            `;
+
+            // Показываем транзакции только этой категории
+            displayTransactionHistory(category);
+        }
+
+        // Функция для отображения истории транзакций
+        function displayTransactionHistory(category = null) {
+            const historyContainer = document.getElementById('transactionHistory');
+            historyContainer.innerHTML = '';
+            const transactions = category ?
+                diagrams[currentDiagramIndex].transactions.filter(t => t.category === category) :
+                diagrams[currentDiagramIndex].transactions;
+
+            transactions.forEach((transaction, index) => {
+                const transactionElement = document.createElement('div');
+                transactionElement.className = 'transaction';
+                transactionElement.style.backgroundColor = transaction.color;
+                const amountInUAH = transaction.currency === 'CAD' ? transaction.amount * exchangeRate : transaction.amount;
+                transactionElement.innerHTML = `
+                    <p><strong>Сумма:</strong> ${transaction.amount} ${transaction.currency}</p>
+                    <p><strong>Сумма в UAH:</strong> ${amountInUAH.toFixed(2)}</p>
+                    <p><strong>Категория:</strong> ${transaction.category}</p>
+                    <p><strong>Дата:</strong> ${transaction.date}</p>
+                `;
+                historyContainer.appendChild(transactionElement);
+            });
+        }
+
+        // Функция для переключения размера диаграммы
+        function toggleChartSize() {
+            const chartContainer = document.getElementById('chartContainer');
+            const historyContainer = document.querySelector('.history');
+
+            chartContainer.classList.toggle('shrinked');
+            if (chartContainer.classList.contains('shrinked')) {
+                chartContainer.classList.remove('expand');
+                historyContainer.classList.add('visible'); // Показываем историю
+            } else {
+                chartContainer.classList.add('expand');
+                historyContainer.classList.remove('visible'); // Скрываем историю
+            }
+        }
+
+        // Функция для отображения списка диаграмм
+        function showDiagramList() {
+            const modal = document.getElementById('diagramModal');
+            const diagramList = document.getElementById('diagramList');
+            diagramList.innerHTML = '';
+            diagrams.forEach((diagram, index) => {
+                const diagramItem = document.createElement('div');
+                diagramItem.innerHTML = `
+                    <button onclick="switchDiagram(${index})">${diagram.name}</button>
+                `;
+                diagramList.appendChild(diagramItem);
+            });
+            modal.style.display = 'flex';
+        }
+
+        // Функция для закрытия модального окна
+        function closeDiagramModal() {
+            const modal = document.getElementById('diagramModal');
+            modal.style.display = 'none';
+        }
+
+        // Функция для добавления новой диаграммы
+        function addDiagram() {
+            const name = document.getElementById('newDiagramName').value;
+            if (name) {
+                diagrams.push({ name: name, transactions: [] });
+                localStorage.setItem('diagrams', JSON.stringify(diagrams));
+                closeDiagramModal();
+                showDiagramList();
+            }
+        }
+
+        // Функция для переключения между диаграммами
+        function switchDiagram(index) {
+            currentDiagramIndex = index;
+            updateTotalSpent();
+            displayChart();
+            displayTransactionHistory();
+            closeDiagramModal();
+        }
+
+        // Инициализация при загрузке страницы
+        getExchangeRate();
+        updateTotalSpent();
+        displayChart();
+        displayTransactionHistory();
+    </script>
+</body>
+
+</html>
